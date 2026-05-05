@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0a1f14" />
+  <meta name="description" content="Golf swing tempo trainer using PGA Tour pros as reference. Audio cues for backswing, top, and impact." />
+
+  <title>Tempo · Golf Swing Trainer</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <div class="app">
+
+    <header class="head fade-in">
+      <div class="brand"><span class="dot"></span>TEMPO · STUDIO</div>
+      <div class="ratio-tag" id="ratioTag">3 : 1</div>
+    </header>
+
+    <section class="fade-in">
+      <div class="section-label">Reference Tempo</div>
+      <div class="pros" id="pros">
+        <button class="pro" data-pro="aberg">
+          <span class="name">Åberg</span>
+          <span class="ratio">24 / 8</span>
+        </button>
+        <button class="pro active" data-pro="rory">
+          <span class="name">McIlroy</span>
+          <span class="ratio">21 / 7</span>
+        </button>
+        <button class="pro" data-pro="knapp">
+          <span class="name">Knapp</span>
+          <span class="ratio">27 / 9</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="fade-in">
+      <div class="section-label">Shot Type</div>
+      <div class="game-toggle">
+        <button class="game-btn active" data-mode="long">
+          Long Game
+          <span class="small">DRIVER · IRONS</span>
+        </button>
+        <button class="game-btn" data-mode="short">
+          Short Game
+          <span class="small">WEDGES · CHIPS</span>
+        </button>
+      </div>
+    </section>
+
+    <div class="stage fade-in">
+      <div class="arc-wrap">
+        <svg class="arc" viewBox="0 0 320 230" preserveAspectRatio="xMidYMid meet">
+          <path class="arc-track" d="M 30 200 A 130 130 0 0 1 290 200" />
+          <path id="progPath" class="arc-progress"
+                d="M 30 200 A 130 130 0 0 1 290 200"
+                stroke-dasharray="408"
+                stroke-dashoffset="408" />
+          <line x1="160" y1="200" x2="160" y2="218" stroke="rgba(244,234,213,0.3)" stroke-width="1" />
+          <circle class="ball" cx="160" cy="200" r="4" />
+          <text class="tee-label" x="160" y="228" text-anchor="middle">IMPACT</text>
+        </svg>
+
+        <div class="readout">
+          <div class="phase" id="phase">READY</div>
+          <div class="timer"><span id="timer">0.93</span><span class="unit">s</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="play-btn fade-in" id="playBtn">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <span id="playLabel">Start Tempo</span>
+      </button>
+
+      <div class="meta fade-in">
+        <span>BACK · <b id="metaBack">0.70s</b></span>
+        <span id="metaPro">McIlroy</span>
+        <span>DOWN · <b id="metaDown">0.23s</b></span>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="js/tempo-data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // Register service worker for offline support
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
