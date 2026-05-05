@@ -1,111 +1,664 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#0a1f14" />
-  <meta name="description" content="Golf swing tempo trainer using PGA Tour pros as reference. Audio cues for backswing, top, and impact." />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#0a1f14" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>Tempo · Golf Swing Trainer</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #f4ead5;
+    --ink-dim: #a8a08a;
+    --ink-faint: #5e594a;
+    --bg: #0a1f14;
+    --bg-2: #0e2a1a;
+    --bg-3: #143524;
+    --accent: #d4f54a;
+    --accent-dim: #8fb02a;
+    --warm: #e8a04a;
+    --line: rgba(244, 234, 213, 0.12);
+  }
 
-  <title>Tempo · Golf Swing Trainer</title>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  html, body {
+    height: 100%;
+    overscroll-behavior: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Fraunces', Georgia, serif;
+    font-feature-settings: "ss01" on, "ss02" on;
+    overflow: hidden;
+    position: relative;
+    /* subtle grain + radial wash */
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(212, 245, 74, 0.06), transparent 70%),
+      radial-gradient(ellipse 60% 40% at 50% 100%, rgba(232, 160, 74, 0.04), transparent 70%);
+  }
 
-  <link rel="stylesheet" href="css/styles.css" />
+  /* grain overlay */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.4;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+    z-index: 100;
+  }
+
+  .app {
+    height: 100dvh;
+    height: 100vh;
+    padding: max(env(safe-area-inset-top), 18px) 22px max(env(safe-area-inset-bottom), 18px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+  }
+
+  /* ---------- HEADER ---------- */
+  .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+  }
+  .brand .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: 8px;
+    vertical-align: middle;
+    box-shadow: 0 0 12px var(--accent);
+  }
+  .ratio-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+
+  /* ---------- PRO SELECT ---------- */
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .pros {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .pro {
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 10px;
+    color: var(--ink);
+    font-family: 'Fraunces', serif;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .pro .name {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    font-style: italic;
+  }
+  .pro .ratio {
+    display: block;
+    margin-top: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.08em;
+    font-style: normal;
+  }
+  .pro.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px -8px rgba(212, 245, 74, 0.5);
+  }
+  .pro.active .ratio {
+    color: rgba(10, 31, 20, 0.7);
+  }
+
+  /* ---------- GAME TOGGLE ---------- */
+  .game-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 4px;
+    position: relative;
+  }
+  .game-btn {
+    background: transparent;
+    border: none;
+    padding: 12px 10px;
+    color: var(--ink-dim);
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.25s ease;
+    z-index: 1;
+    position: relative;
+  }
+  .game-btn .small {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 0.15em;
+    margin-top: 2px;
+    opacity: 0.7;
+  }
+  .game-btn.active {
+    background: var(--bg-3);
+    color: var(--ink);
+    box-shadow: inset 0 0 0 1px rgba(212, 245, 74, 0.2);
+  }
+
+  /* ---------- VISUALIZER ---------- */
+  .stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    min-height: 220px;
+  }
+
+  .arc-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 1.4 / 1;
+  }
+
+  svg.arc {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .arc-track {
+    fill: none;
+    stroke: var(--line);
+    stroke-width: 1.5;
+    stroke-dasharray: 2 4;
+  }
+  .arc-progress {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 3;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 6px rgba(212, 245, 74, 0.6));
+    transition: stroke 0.2s;
+  }
+  .arc-progress.down {
+    stroke: var(--warm);
+    filter: drop-shadow(0 0 8px rgba(232, 160, 74, 0.7));
+  }
+  .ball {
+    fill: var(--ink);
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+  }
+  .tee-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    fill: var(--ink-faint);
+    letter-spacing: 0.15em;
+  }
+
+  /* center readout */
+  .readout {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    text-align: center;
+  }
+  .phase {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+    transition: color 0.2s;
+  }
+  .phase.active { color: var(--accent); }
+  .phase.down-active { color: var(--warm); }
+  .timer {
+    font-family: 'Fraunces', serif;
+    font-size: 56px;
+    font-weight: 300;
+    font-style: italic;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .timer .unit {
+    font-size: 18px;
+    color: var(--ink-faint);
+    font-style: normal;
+    margin-left: 2px;
+  }
+
+  /* ---------- CONTROLS ---------- */
+  .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .play-btn {
+    width: 100%;
+    padding: 22px;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 18px;
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    font-style: italic;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 8px 32px -10px rgba(212, 245, 74, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+  .play-btn:active { transform: scale(0.98); }
+  .play-btn.playing {
+    background: var(--bg-3);
+    color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+  .play-btn .icon {
+    width: 14px; height: 14px;
+  }
+
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    padding: 0 4px;
+  }
+  .meta b { color: var(--ink-dim); font-weight: 400; }
+
+  /* ---------- ENTRY ANIMS ---------- */
+  .fade-in { animation: fadeUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+  .fade-in:nth-child(1) { animation-delay: 0.05s; }
+  .fade-in:nth-child(2) { animation-delay: 0.15s; }
+  .fade-in:nth-child(3) { animation-delay: 0.25s; }
+  .fade-in:nth-child(4) { animation-delay: 0.35s; }
+  .fade-in:nth-child(5) { animation-delay: 0.45s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* responsive scaling */
+  @media (max-height: 700px) {
+    .timer { font-size: 44px; }
+    .play-btn { padding: 18px; font-size: 20px; }
+    .pro { padding: 12px 8px; }
+    .pro .name { font-size: 15px; }
+  }
+</style>
 </head>
 <body>
 
-  <div class="app">
+<div class="app">
 
-    <header class="head fade-in">
-      <div class="brand"><span class="dot"></span>TEMPO · STUDIO</div>
-      <div class="ratio-tag" id="ratioTag">3 : 1</div>
-    </header>
+  <!-- HEADER -->
+  <header class="head fade-in">
+    <div class="brand"><span class="dot"></span>TEMPO · STUDIO</div>
+    <div class="ratio-tag" id="ratioTag">3 : 1</div>
+  </header>
 
-    <section class="fade-in">
-      <div class="section-label">Reference Tempo</div>
-      <div class="pros" id="pros">
-        <button class="pro" data-pro="aberg">
-          <span class="name">Åberg</span>
-          <span class="ratio">24 / 8</span>
-        </button>
-        <button class="pro active" data-pro="rory">
-          <span class="name">McIlroy</span>
-          <span class="ratio">21 / 7</span>
-        </button>
-        <button class="pro" data-pro="knapp">
-          <span class="name">Knapp</span>
-          <span class="ratio">27 / 9</span>
-        </button>
-      </div>
-    </section>
-
-    <section class="fade-in">
-      <div class="section-label">Shot Type</div>
-      <div class="game-toggle">
-        <button class="game-btn active" data-mode="long">
-          Long Game
-          <span class="small">DRIVER · IRONS</span>
-        </button>
-        <button class="game-btn" data-mode="short">
-          Short Game
-          <span class="small">WEDGES · CHIPS</span>
-        </button>
-      </div>
-    </section>
-
-    <div class="stage fade-in">
-      <div class="arc-wrap">
-        <svg class="arc" viewBox="0 0 320 230" preserveAspectRatio="xMidYMid meet">
-          <path class="arc-track" d="M 30 200 A 130 130 0 0 1 290 200" />
-          <path id="progPath" class="arc-progress"
-                d="M 30 200 A 130 130 0 0 1 290 200"
-                stroke-dasharray="408"
-                stroke-dashoffset="408" />
-          <line x1="160" y1="200" x2="160" y2="218" stroke="rgba(244,234,213,0.3)" stroke-width="1" />
-          <circle class="ball" cx="160" cy="200" r="4" />
-          <text class="tee-label" x="160" y="228" text-anchor="middle">IMPACT</text>
-        </svg>
-
-        <div class="readout">
-          <div class="phase" id="phase">READY</div>
-          <div class="timer"><span id="timer">0.93</span><span class="unit">s</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="controls">
-      <button class="play-btn fade-in" id="playBtn">
-        <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        <span id="playLabel">Start Tempo</span>
+  <!-- PRO SELECTION -->
+  <section class="fade-in">
+    <div class="section-label">Reference Tempo</div>
+    <div class="pros" id="pros">
+      <button class="pro" data-pro="aberg">
+        <span class="name">Åberg</span>
+        <span class="ratio">24 / 8</span>
       </button>
+      <button class="pro active" data-pro="rory">
+        <span class="name">McIlroy</span>
+        <span class="ratio">21 / 7</span>
+      </button>
+      <button class="pro" data-pro="knapp">
+        <span class="name">Knapp</span>
+        <span class="ratio">27 / 9</span>
+      </button>
+    </div>
+  </section>
 
-      <div class="meta fade-in">
-        <span>BACK · <b id="metaBack">0.70s</b></span>
-        <span id="metaPro">McIlroy</span>
-        <span>DOWN · <b id="metaDown">0.23s</b></span>
+  <!-- GAME MODE -->
+  <section class="fade-in">
+    <div class="section-label">Shot Type</div>
+    <div class="game-toggle">
+      <button class="game-btn active" data-mode="long">
+        Long Game
+        <span class="small">DRIVER · IRONS</span>
+      </button>
+      <button class="game-btn" data-mode="short">
+        Short Game
+        <span class="small">WEDGES · CHIPS</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- VISUALIZER -->
+  <div class="stage fade-in">
+    <div class="arc-wrap">
+      <svg class="arc" viewBox="0 0 320 230" preserveAspectRatio="xMidYMid meet">
+        <!-- swing arc track (dashed semicircle) -->
+        <path class="arc-track"
+              d="M 30 200 A 130 130 0 0 1 290 200" />
+        <!-- progress path (we'll animate stroke-dashoffset) -->
+        <path id="progPath" class="arc-progress"
+              d="M 30 200 A 130 130 0 0 1 290 200"
+              stroke-dasharray="408"
+              stroke-dashoffset="408" />
+        <!-- tee/ball at bottom -->
+        <line x1="160" y1="200" x2="160" y2="218" stroke="rgba(244,234,213,0.3)" stroke-width="1" />
+        <circle class="ball" cx="160" cy="200" r="4" />
+        <text class="tee-label" x="160" y="228" text-anchor="middle">IMPACT</text>
+      </svg>
+
+      <div class="readout">
+        <div class="phase" id="phase">READY</div>
+        <div class="timer"><span id="timer">0.93</span><span class="unit">s</span></div>
       </div>
     </div>
-
   </div>
 
-  <script src="js/tempo-data.js"></script>
-  <script src="js/audio.js"></script>
-  <script src="js/app.js"></script>
-  <script>
-    // Register service worker for offline support
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
-      });
+  <!-- CONTROLS -->
+  <div class="controls">
+    <button class="play-btn fade-in" id="playBtn">
+      <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      <span id="playLabel">Start Tempo</span>
+    </button>
+
+    <div class="meta fade-in">
+      <span>BACK · <b id="metaBack">0.70s</b></span>
+      <span id="metaPro">McIlroy</span>
+      <span>DOWN · <b id="metaDown">0.23s</b></span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ============================================================
+  //  TEMPO DATA
+  //  Based on Tour Tempo's frame-ratio system (30fps video).
+  //  Long game = full swing. Short game = same RATIO, slightly
+  //  slower absolute tempo (smoother feel for partial shots).
+  // ============================================================
+  const PROS = {
+    aberg: { name: 'Åberg',   long: { back: 0.80, down: 0.27 }, short: { back: 0.93, down: 0.31 }, ratio: '24/8' },
+    rory:  { name: 'McIlroy', long: { back: 0.70, down: 0.23 }, short: { back: 0.83, down: 0.28 }, ratio: '21/7' },
+    knapp: { name: 'Knapp',   long: { back: 0.90, down: 0.30 }, short: { back: 1.03, down: 0.34 }, ratio: '27/9' }
+  };
+
+  let currentPro = 'rory';
+  let currentMode = 'long';
+  let isPlaying = false;
+  let loopId = null;
+  let rafId = null;
+
+  // ============================================================
+  //  AUDIO ENGINE  (Web Audio API — synthesized, no files needed)
+  //  Three distinct cues:
+  //   - START : low woody "tock"
+  //   - TOP   : mid metallic ping (transition cue)
+  //   - IMPACT: bright accent click
+  // ============================================================
+  let audioCtx = null;
+  function getCtx() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
-  </script>
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function playTone({ freq, duration, type = 'sine', gain = 0.3, attack = 0.005, decay = 0.15 }) {
+    const ctx = getCtx();
+    const t0 = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = freq * 4;
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.7, t0 + duration);
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(gain, t0 + attack);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
+    osc.connect(filter); filter.connect(g); g.connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + duration + 0.05);
+  }
+
+  // distinct cue sounds
+  const CUE = {
+    start:  () => playTone({ freq: 220, duration: 0.18, type: 'sine',     gain: 0.35, decay: 0.18 }),
+    top:    () => playTone({ freq: 520, duration: 0.14, type: 'triangle', gain: 0.28, decay: 0.14 }),
+    impact: () => {
+      // sharp crack: short noise burst + bright sine
+      const ctx = getCtx();
+      const t0 = ctx.currentTime;
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.05, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i/data.length, 2);
+      const src = ctx.createBufferSource(); src.buffer = buf;
+      const g = ctx.createGain(); g.gain.value = 0.25;
+      const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1200;
+      src.connect(hp); hp.connect(g); g.connect(ctx.destination);
+      src.start(t0); src.stop(t0 + 0.05);
+      playTone({ freq: 880, duration: 0.08, type: 'sine', gain: 0.2, decay: 0.08 });
+    }
+  };
+
+  // ============================================================
+  //  RENDER
+  // ============================================================
+  const $ = (id) => document.getElementById(id);
+  const PATH_LEN = 408; // approx arc length
+
+  function getTempo() {
+    return PROS[currentPro][currentMode];
+  }
+
+  function refreshDisplay() {
+    const t = getTempo();
+    const total = t.back + t.down;
+    $('timer').textContent = total.toFixed(2);
+    $('metaBack').textContent = t.back.toFixed(2) + 's';
+    $('metaDown').textContent = t.down.toFixed(2) + 's';
+    $('metaPro').textContent = PROS[currentPro].name.toUpperCase();
+    $('ratioTag').textContent = PROS[currentPro].ratio.replace('/', ' : ');
+    resetArc();
+  }
+
+  function resetArc() {
+    const path = $('progPath');
+    path.style.transition = 'none';
+    path.setAttribute('stroke-dashoffset', PATH_LEN);
+    path.classList.remove('down');
+    $('phase').textContent = 'READY';
+    $('phase').className = 'phase';
+  }
+
+  function animateSwing() {
+    const t = getTempo();
+    const path = $('progPath');
+    const phase = $('phase');
+
+    // BACKSWING: arc fills from bottom-left up & over to bottom-right
+    path.style.transition = `stroke-dashoffset ${t.back}s cubic-bezier(0.4, 0, 0.6, 1)`;
+    path.setAttribute('stroke-dashoffset', 0);
+    path.classList.remove('down');
+    phase.textContent = 'BACKSWING';
+    phase.className = 'phase active';
+    CUE.start();
+
+    // TOP transition
+    setTimeout(() => {
+      if (!isPlaying) return;
+      CUE.top();
+      phase.textContent = 'DOWNSWING';
+      phase.className = 'phase down-active';
+      path.classList.add('down');
+      // DOWNSWING: arc retreats fast back toward start (visual "release")
+      path.style.transition = `stroke-dashoffset ${t.down}s cubic-bezier(0.7, 0, 0.85, 1)`;
+      path.setAttribute('stroke-dashoffset', PATH_LEN);
+    }, t.back * 1000);
+
+    // IMPACT
+    setTimeout(() => {
+      if (!isPlaying) return;
+      CUE.impact();
+      phase.textContent = 'IMPACT';
+      phase.className = 'phase';
+    }, (t.back + t.down) * 1000);
+  }
+
+  function startLoop() {
+    isPlaying = true;
+    $('playBtn').classList.add('playing');
+    $('playLabel').textContent = 'Stop';
+    $('playBtn').querySelector('.icon').innerHTML = '<rect x="6" y="6" width="12" height="12" rx="1"/>';
+
+    const cycle = () => {
+      if (!isPlaying) return;
+      const t = getTempo();
+      const total = t.back + t.down;
+      animateSwing();
+      // gap between swings = total cycle length (so feel of "1...2...3...swing")
+      // we'll use one full swing length as rest
+      const rest = Math.max(0.9, total * 0.7);
+      loopId = setTimeout(() => {
+        if (!isPlaying) return;
+        // brief reset visual
+        resetArc();
+        $('phase').textContent = 'READY';
+        $('phase').className = 'phase';
+        loopId = setTimeout(cycle, 400);
+      }, total * 1000 + 200);
+    };
+    cycle();
+  }
+
+  function stopLoop() {
+    isPlaying = false;
+    if (loopId) clearTimeout(loopId);
+    if (rafId) cancelAnimationFrame(rafId);
+    $('playBtn').classList.remove('playing');
+    $('playLabel').textContent = 'Start Tempo';
+    $('playBtn').querySelector('.icon').innerHTML = '<path d="M8 5v14l11-7z"/>';
+    setTimeout(resetArc, 50);
+  }
+
+  // ============================================================
+  //  EVENTS
+  // ============================================================
+  document.querySelectorAll('.pro').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.pro').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentPro = btn.dataset.pro;
+      refreshDisplay();
+      if (isPlaying) { stopLoop(); setTimeout(startLoop, 250); }
+    });
+  });
+
+  document.querySelectorAll('.game-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.game-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentMode = btn.dataset.mode;
+      refreshDisplay();
+      if (isPlaying) { stopLoop(); setTimeout(startLoop, 250); }
+    });
+  });
+
+  $('playBtn').addEventListener('click', () => {
+    getCtx(); // unlock audio on user gesture
+    if (isPlaying) stopLoop(); else startLoop();
+  });
+
+  // prevent iOS double-tap zoom
+  document.addEventListener('gesturestart', e => e.preventDefault());
+
+  // initial
+  refreshDisplay();
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  }
+</script>
+
 </body>
 </html>
